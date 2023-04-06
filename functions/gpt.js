@@ -5,13 +5,21 @@ exports.handler = async (event, context) => {
     .then((gpt) => {
       const api = new gpt.ChatGPTAPI({
         apiKey: process.env.OPENAI_API_KEY
-      })
-      return api.sendMessage(body.payload)
-    })
-    .then((response) => {
-      return {
-        statusCode: 200,
-        body: response.text,
-      };
+      });
+
+      if (body.payload !== undefined) {
+        return api.sendMessage(body.payload)
+          .then((response) => {
+            return {
+              statusCode: 200,
+              body: response.text,
+            };
+          });
+      } else {
+        return {
+          statusCode: 400,
+          body: 'Payload missing',
+        };
+      }
     });
 };
