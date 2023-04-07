@@ -43,7 +43,7 @@ export const handler = async (event) => {
   }
 
   // const prompt = `You're a powerful auto-completion AI in the process of filling in a form field labelled '${field}' on a website; you write: ${payload} `;
-  const prompt = `You are an auto-completion AI generating output for a form field named '${field}', when you are complete you end with '${STOP_TOKEN}': ${payload}`.trim();
+  const prompt = `You are an auto-completion AI generating output for a form field named '${field}', only when you have completely finished generating field text, output the stop token '${STOP_TOKEN}': ${payload}`.trim();
   console.log('the prompt', prompt);
 
   let gptParams = {
