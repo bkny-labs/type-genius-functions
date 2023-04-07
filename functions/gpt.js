@@ -1,35 +1,44 @@
+// const { ChatGPTAPI } = await import('chatgpt');
 import fetch from "node-fetch";
 
-const OPENAI_API_URL = `https://api.openai.com/v1/chat/completions`;
-const TYPE_GENIUS_SYSTEM_PROMPT =
-  "You are TypeGenius, an AI that helps people fill in inputs and text areas on any website. You will complete the sentence sent by the User and include no other output to your response.";
+// const OPENAI_API_URL = `https://api.openai.com/v1/chat/completions`;
+const OPENAI_API_URL = `https://api.openai.com/v1/completions`;
 
-exports.handler = async (event, context) => {
-  if (!event.body || event.headers["content-type"] !== "application/json") {
-    return {
-      statusCode: 400,
-      body: "Bad Request",
-    };
+function createResponse(statusCode, res) {
+  return {
+    statusCode,
+    headers: {
+      "Access-Control-Allow-Origin" : "*",
+      "Access-Control-Allow-Credentials" : true
+    },
+    body: JSON.stringify({ res }),
+  };
+}
+
+export const handler = async(event) => {
+  const body = JSON.parse(event.body);
+  const field = body.field;
+  const payload = body.payload;
+
+  const prompt = `You're a powerful auto-completion AI in the process of filling in a form field labelled '${field}' on a website; you write: ${payload} `;
+
+  if (field === undefined || prompt == undefined) {
+    return createResponse(400, 'Payload missing');
   }
 
-  let body;
-  try {
-    body = JSON.parse(event.body);
-  } catch (e) {
-    return {
-      statusCode: 400,
-      body: "Malformed Payload" + e,
-    };
-  }
+  const model = body.model || "text-davinci-002";
+  const max_tokens = body.max_tokens ||  7;
+  const temperature = body.temperature ||  0;
+  const top_p = body.top_p ||  1;
+  const n = body.n ||  1;
+  const stream = body.stream ||  false;
+  const logprobs = body.logprobs ||  null;
+  const stop = body.stop ||  "\n";
 
-  if (!body.payload) {
-    return {
-      statusCode: 400,
-      body: "Payload Missing",
-    };
-  }
+  const multi = body.multi || false;
 
   let gptResponse;
+
   try {
     gptResponse = await fetch(OPENAI_API_URL, {
       method: "POST",
@@ -38,45 +47,31 @@ exports.handler = async (event, context) => {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: TYPE_GENIUS_SYSTEM_PROMPT,
-          },
-          {
-            role: "user",
-            content: body.payload,
-          },
-        ],
+        model,
+        prompt,
+        max_tokens,
+        temperature,
+        top_p,
+        n,
+        stream,
+        logprobs,
+        stop,
       }),
     });
   } catch (e) {
-    return {
-      statusCode: 500,
-      body: "OpenAI API Error: " + e,
-    };
-  }
-
-  if (gptResponse.status !== 200) {
-    const body = await gptResponse.text();
-    return {
-      statusCode: 500,
-      body: `Failed to send message. HTTP ${gptResponse.status} - ${body}`,
-    };
+    return createResponse(503, e);
   }
 
   const gptPayload = await gptResponse.json();
-  const completion = gptPayload?.choices[0]?.message;
 
-  if (!completion) {
-    return {
-      statusCode: 500,
-      body: "Server Error: No reply from OpenAI",
-    };
+  if (gptPayload.choices === undefined) {
+    return createResponse(503, gptPayload);
   }
 
-  return {
-    statusCode: 200,
-    body: completion,
-  };
+  if(multi) {
+    return createResponse(200, gptPayload.choices);
+  }
+
+  return createResponse(200, gptPayload.choices[0].text);
+
 };
