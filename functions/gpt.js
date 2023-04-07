@@ -1,5 +1,4 @@
-import axios from "axios";
-
+const axios = require("axios");
 const OPENAI_API_URL = `https://api.openai.com/v1/completions`;
 
 function createResponse(statusCode, res) {
@@ -25,7 +24,7 @@ const defaultModelOptions = {
 
 const STOP_TOKEN = "<text_end>";
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   let body;
   try {
     body = JSON.parse(event.body);
