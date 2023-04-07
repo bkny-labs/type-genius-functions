@@ -18,6 +18,6 @@
   },
   "homepage": "https://github.com/davidkim9/stonkfinder-proxy#readme",
   "dependencies": {
-    "node-fetch": "^3.3.1"
+    "axios": "^1.3.5"
   }
 }
