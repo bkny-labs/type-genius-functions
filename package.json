@@ -17,9 +17,5 @@
     "url": "https://github.com/davidkim9/stonkfinder-proxy/issues"
   },
   "homepage": "https://github.com/davidkim9/stonkfinder-proxy#readme",
-  "dependencies": {
-    "chatgpt": "^5.2.2",
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.1"
-  }
+  "dependencies": {}
 }
