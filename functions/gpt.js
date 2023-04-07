@@ -13,42 +13,52 @@ function createResponse(statusCode, res) {
   };
 }
 
+const defaultModelOptions = {
+  model: "text-davinci-002",
+  max_tokens: 1024,
+  temperature: 0,
+  top_p: 1,
+  n: 1,
+  stream: false,
+  logprobs: null,
+}
+
+const STOP_TOKEN = "<text_end>";
+
 export const handler = async (event) => {
-  const body = JSON.parse(event.body);
+  let body;
+  try {
+    body = JSON.parse(event.body);
+  } catch (e) {
+    return createResponse(400, "Invalid input");
+  }
+  console.log('test log', body);
+
   const field = body.field;
   const payload = body.payload;
+  const multi = body.multi || false;
 
-  const prompt = `You're a powerful auto-completion AI in the process of filling in a form field labelled '${field}' on a website; you write: ${payload} `;
-
-  if (field === undefined || prompt == undefined) {
+  if (field === undefined || payload == undefined) {
     return createResponse(400, "Payload missing");
   }
 
-  const model = body.model || "text-davinci-002";
-  const max_tokens = body.max_tokens || 7;
-  const temperature = body.temperature || 0;
-  const top_p = body.top_p || 1;
-  const n = body.n || 1;
-  const stream = body.stream || false;
-  const logprobs = body.logprobs || null;
-  const stop = body.stop || "\n";
+  // const prompt = `You're a powerful auto-completion AI in the process of filling in a form field labelled '${field}' on a website; you write: ${payload} `;
+  const prompt = `You are an auto-completion AI generating output for a form field named '${field}', when you are complete you end with '${STOP_TOKEN}': ${payload}`.trim();
+  console.log('the prompt', prompt);
 
-  const multi = body.multi || false;
+  let gptParams = {
+    ...defaultModelOptions,
+    ...body.modelOptions,
+    model: body.model || defaultModelOptions.model,
+    stop: STOP_TOKEN,
+    prompt,
+  };
+  console.log('the params', gptParams);
 
   let gptResponse;
 
   try {
-    gptResponse = await axios.post(OPENAI_API_URL, {
-      model,
-      prompt,
-      max_tokens,
-      temperature,
-      top_p,
-      n,
-      stream,
-      logprobs,
-      stop,
-    }, {
+    gptResponse = await axios.post(OPENAI_API_URL, gptParams, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -59,6 +69,7 @@ export const handler = async (event) => {
   }
 
   const gptPayload = gptResponse.data;
+  console.log('the payload', gptPayload);
 
   if (gptPayload.choices === undefined) {
     return createResponse(503, gptPayload);
