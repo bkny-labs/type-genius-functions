@@ -68,7 +68,7 @@ exports.handler = async (event, context) => {
   const gptPayload = await gptResponse.json();
   const completion = gptPayload?.choices[0]?.message;
 
-  if (!reply) {
+  if (!completion) {
     return {
       statusCode: 500,
       body: "Server Error: No reply from OpenAI",
