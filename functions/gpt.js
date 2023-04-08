@@ -1,7 +1,7 @@
 const axios = require("axios");
 const OPENAI_API_URL = `https://api.openai.com/v1/completions`;
 
-function createResponse(statusCode, res) {
+function createResponse(statusCode, error, res) {
   return {
     statusCode,
     headers: {
@@ -9,7 +9,7 @@ function createResponse(statusCode, res) {
       "Access-Control-Allow-Credentials": true,
       'Access-Control-Allow-Methods': 'POST, OPTIONS'
     },
-    body: JSON.stringify({ res }),
+    body: JSON.stringify({ payload: res, error }),
   };
 }
 
@@ -29,7 +29,7 @@ exports.handler = async (event) => {
   if(event.httpMethod === 'OPTIONS') {
     return createResponse(200, 'ok');
   }
-  
+
   let body;
   try {
     body = JSON.parse(event.body);
@@ -79,9 +79,12 @@ exports.handler = async (event) => {
     return createResponse(503, gptPayload);
   }
 
-  if (multi) {
-    return createResponse(200, gptPayload.choices);
-  }
+  const completion = multi ? gptPayload.choices.map((choice) => choice.text.trim()) : gptPayload.choices[0].text.trim();
+  const response = {
+    text: completion,
+    model: gptPayload.model,
+    usage: gptPayload.usage,
+  };
 
-  return createResponse(200, gptPayload.choices[0].text);
+  return createResponse(200, null, response);
 };
