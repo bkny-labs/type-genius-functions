@@ -7,6 +7,7 @@ function createResponse(statusCode, error, res) {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Credentials": true,
+      "Access-Control-Allow-Headers": "Content-Type",
       'Access-Control-Allow-Methods': 'POST, OPTIONS'
     },
     body: JSON.stringify({ payload: res, error }),
