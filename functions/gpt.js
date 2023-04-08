@@ -7,6 +7,7 @@ function createResponse(statusCode, res) {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Credentials": true,
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
     },
     body: JSON.stringify({ res }),
   };
@@ -25,6 +26,10 @@ const defaultModelOptions = {
 const STOP_TOKEN = "<text_end>";
 
 exports.handler = async (event) => {
+  if(event.httpMethod === 'OPTIONS') {
+    return createResponse(200, 'ok');
+  }
+  
   let body;
   try {
     body = JSON.parse(event.body);
